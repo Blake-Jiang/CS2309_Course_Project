@@ -4,6 +4,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -84,17 +85,17 @@ bool solve24(vector<double>& nums, vector<string>& exprs, string& solution) {
     return false;
 }
 
-// 修改main函数，支持扑克牌输入
-int main() {
+// 添加新的函数：处理单行数据
+bool processLine(const string& line, string& result, string& solution) {
     vector<double> nums(4);
     vector<string> exprs(4);
+    stringstream ss(line);
     string input;
+    int i = 0;
     
-    cout << "Enter 4 cards (A,2-10,J,Q,K): ";
-    for (int i = 0; i < 4; ++i) {
-        cin >> input;
+    while (ss >> input && i < 4) {
         // 转换扑克牌输入
-        if (input == "A") {
+        if (input == "A" || input == "1") {
             nums[i] = 1;
         } else if (input == "J") {
             nums[i] = 11;
@@ -106,15 +107,89 @@ int main() {
             nums[i] = stod(input);
         }
         exprs[i] = input;
+        i++;
     }
 
-    string solution;
-    if (solve24(nums, exprs, solution)) {
-        cout << "Yes, it is possible to get 24." << endl;
-        cout << "Solution: " << solution << " = 24" << endl;
-    } else {
-        cout << "No, it is not possible to get 24." << endl;
+    bool success = solve24(nums, exprs, solution);
+    result = (success ? "+ " : "- ") + line;
+    return success;
+}
+
+// 添加新函数：处理控制台输入
+void processConsoleInput() {
+    string input;
+    cout << "Please enter 4 numbers (A, 2-10, J, Q, K), separated by spaces:" << endl;
+    getline(cin, input);
+    
+    string result, solution;
+    bool success = processLine(input, result, solution);
+    
+    cout << (success ? "Solution found!\n" : "No solution found.\n");
+    if (success) {
+        cout << "Expression: " << solution << " = 24" << endl;
+    }
+}
+
+// 添加新函数：处理文件输入
+void processFileInput() {
+    ifstream inFile("test.txt");
+    ofstream outFile("test_result.txt");
+    
+    if (!inFile.is_open()) {
+        cout << "Cannot open input file!" << endl;
+        return;
     }
 
+    string line;
+    int totalCount = 0;
+    int successCount = 0;
+    
+    while (getline(inFile, line)) {
+        if (line.empty()) continue;
+        
+        string result, solution;
+        bool success = processLine(line, result, solution);
+        
+        if (success) successCount++;
+        totalCount++;
+        
+        outFile << result << endl;
+    }
+    
+    outFile << successCount << "/" << totalCount << endl;
+    
+    inFile.close();
+    outFile.close();
+    
+    cout << "Processing complete! Results saved to test_result.txt" << endl;
+}
+
+// 修改 main 函数
+int main() {
+    while (true) {
+        cout << "\n24 Point Calculator" << endl;
+        cout << "1. Console Input" << endl;
+        cout << "2. File Input" << endl;
+        cout << "3. Exit" << endl;
+        cout << "Please choose an option (1-3): ";
+        
+        string choice;
+        getline(cin, choice);
+        
+        if (choice == "1") {
+            processConsoleInput();
+        }
+        else if (choice == "2") {
+            processFileInput();
+        }
+        else if (choice == "3") {
+            cout << "Program terminated." << endl;
+            break;
+        }
+        else {
+            cout << "Invalid choice, please try again." << endl;
+        }
+    }
+    
     return 0;
 }

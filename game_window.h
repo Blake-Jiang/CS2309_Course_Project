@@ -17,30 +17,30 @@
 
 class GameWindow : public Fl_Double_Window {
 private:
-    // Card display boxes
+    
     std::vector<Fl_Box*> cardBoxes;
     
-    // Buttons
+    
     Fl_Button* startButton;
     Fl_Button* checkButton;
     Fl_Button* resetButton;
     Fl_Button* fileButton;
     
-    // Input and output
+    
     Fl_Input* answerInput;
     Fl_Output* resultOutput;
     
-    // New UI components for timer and score
+    
     Fl_Box* timerDisplay;
     Fl_Box* scoreDisplay;
     Fl_Box* highScoreDisplay;
     Fl_Box* comboDisplay;
     Fl_Choice* timeChoice;
     
-    // Game state
+    
     std::vector<int> currentCards;
     
-    // Timer and score state
+    
     int remainingTime;
     int selectedTime;
     bool isTimerRunning;
@@ -49,7 +49,7 @@ private:
     int comboCount;
     bool isFirstTry;
     
-    // Callbacks
+    
     static void cb_start(Fl_Widget*, void*);
     static void cb_check(Fl_Widget*, void*);
     static void cb_reset(Fl_Widget*, void*);
@@ -57,14 +57,14 @@ private:
     static void cb_timer(void* v);
     static void cb_time_changed(Fl_Widget*, void*);
     
-    // Game functions
+    
     void start();
     void check();
     void reset();
     void processFile();
     bool processLine(const std::string& line, std::string& result, std::string& solution);
     
-    // Timer and score functions
+    
     void startTimer();
     void stopTimer();
     void resetTimer();
@@ -75,7 +75,7 @@ private:
     void saveGameData();
     void loadGameData();
     
-    // Expression evaluation functions
+    
     bool validateAnswer(const std::string& answer);
     double evaluateExpression(const std::string& expr);
     int precedence(char op);

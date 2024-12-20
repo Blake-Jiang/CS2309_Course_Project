@@ -57,12 +57,36 @@ void GameWindow::cb_reset(Fl_Widget*, void* v) {
 
 void GameWindow::deal() {
     currentCards.clear();
-    for (int i = 0; i < 4; i++) {
-        int card = rand() % 13 + 1;
-        currentCards.push_back(card);
+    std::vector<int> tempCards;
+    bool hasSolution = false;
+    
+    // Keep generating numbers until we find a solvable combination
+    while (!hasSolution) {
+        tempCards.clear();
+        // Generate 4 random numbers
+        for (int i = 0; i < 4; i++) {
+            int card = rand() % 13 + 1;
+            tempCards.push_back(card);
+        }
         
-        // Update card display
+        // Check if this combination has a solution
+        std::vector<double> nums(tempCards.begin(), tempCards.end());
+        std::vector<std::string> exprs;
+        for (int num : tempCards) {
+            exprs.push_back(std::to_string(num));
+        }
+        
+        std::string solution;
+        if (solve24(nums, exprs, solution)) {
+            hasSolution = true;
+            currentCards = tempCards;  // Save the valid combination
+        }
+    }
+    
+    // Update display
+    for (int i = 0; i < 4; i++) {
         std::string cardText;
+        int card = currentCards[i];
         if (card == 1) cardText = "A";
         else if (card == 11) cardText = "J";
         else if (card == 12) cardText = "Q";
@@ -71,6 +95,8 @@ void GameWindow::deal() {
         
         cardBoxes[i]->label(strdup(cardText.c_str()));
     }
+    
+    resultOutput->value("");  // Clear previous solution
     redraw();
 }
 

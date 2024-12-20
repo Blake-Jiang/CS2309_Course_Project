@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <ctime>
 #include "solve24.h"
+#include <fstream>
+#include <string>
+#include <sstream>
 
 GameWindow::GameWindow(int w, int h, const char* title) 
     : Fl_Double_Window(w, h, title) {
@@ -23,15 +26,23 @@ GameWindow::GameWindow(int w, int h, const char* title)
         cardBoxes.push_back(card);
     }
     
-    // Create buttons
-    dealButton = new Fl_Button(w/2 - 150, h - 70, 70, 30, "Deal");
+    // Create buttons with adjusted positions
+    int buttonWidth = 70;
+    int buttonSpacing = 20;  // Space between buttons
+    int totalWidth = 4 * buttonWidth + 3 * buttonSpacing;  // Total width of all buttons
+    int buttonStartX = w/2 - totalWidth/2;  // Starting X position to center all buttons
+    
+    dealButton = new Fl_Button(buttonStartX, h - 70, buttonWidth, 30, "Deal");
     dealButton->callback(cb_deal, this);
     
-    solveButton = new Fl_Button(w/2 - 50, h - 70, 70, 30, "Solve");
+    solveButton = new Fl_Button(buttonStartX + buttonWidth + buttonSpacing, h - 70, buttonWidth, 30, "Solve");
     solveButton->callback(cb_solve, this);
     
-    resetButton = new Fl_Button(w/2 + 50, h - 70, 70, 30, "Reset");
+    resetButton = new Fl_Button(buttonStartX + 2 * (buttonWidth + buttonSpacing), h - 70, buttonWidth, 30, "Reset");
     resetButton->callback(cb_reset, this);
+    
+    fileButton = new Fl_Button(buttonStartX + 3 * (buttonWidth + buttonSpacing), h - 70, buttonWidth, 30, "File");
+    fileButton->callback(cb_file, this);
     
     // Create result display
     resultOutput = new Fl_Output(50, h - 120, w - 100, 30);
@@ -53,6 +64,10 @@ void GameWindow::cb_solve(Fl_Widget*, void* v) {
 
 void GameWindow::cb_reset(Fl_Widget*, void* v) {
     ((GameWindow*)v)->reset();
+}
+
+void GameWindow::cb_file(Fl_Widget*, void* v) {
+    ((GameWindow*)v)->processFile();
 }
 
 void GameWindow::deal() {
@@ -130,6 +145,85 @@ void GameWindow::reset() {
     redraw();
 }
 
+void GameWindow::processFile() {
+    std::ifstream inFile("test.txt");
+    std::ofstream outFile("test_result.txt");
+    
+    if (!inFile.is_open()) {
+        resultOutput->value("Cannot open input file!");
+        return;
+    }
+
+    std::string line;
+    int totalCount = 0;
+    int successCount = 0;
+    
+    while (std::getline(inFile, line)) {
+        if (line.empty()) continue;
+        
+        std::string result, solution;
+        bool success = processLine(line, result, solution);
+        
+        if (success) successCount++;
+        totalCount++;
+        
+        outFile << result << std::endl;
+    }
+    
+    outFile << successCount << "/" << totalCount << std::endl;
+    
+    inFile.close();
+    outFile.close();
+    
+    resultOutput->value("Results have benn saved to test_result.txt");
+}
+
+bool GameWindow::processLine(const std::string& line, std::string& result, std::string& solution) {
+    std::vector<double> nums(4);
+    std::vector<std::string> exprs(4);
+    std::stringstream ss(line);
+    std::string input;
+    int i = 0;
+    
+    // 检查输入数量
+    std::vector<std::string> inputs;
+    while (ss >> input) {
+        inputs.push_back(input);
+    }
+    
+    if (inputs.size() != 4) {
+        result = "! Invalid input: exactly 4 numbers required";
+        return false;
+    }
+    
+    // 验证每个输入
+    for (const std::string& input : inputs) {
+        // 转换扑克牌输入
+        if (input == "A" || input == "1") {
+            nums[i] = 1;
+        } else if (input == "J") {
+            nums[i] = 11;
+        } else if (input == "Q") {
+            nums[i] = 12;
+        } else if (input == "K") {
+            nums[i] = 13;
+        } else {
+            try {
+                nums[i] = std::stod(input);
+            } catch (...) {
+                result = "! Invalid input: " + input + " is not a valid card value";
+                return false;
+            }
+        }
+        exprs[i] = input;
+        i++;
+    }
+
+    bool success = solve24(nums, exprs, solution);
+    result = (success ? "+ " : "- ") + line;
+    return success;
+}
+
 GameWindow::~GameWindow() {
     for (auto box : cardBoxes) {
         delete box;
@@ -138,4 +232,5 @@ GameWindow::~GameWindow() {
     delete solveButton;
     delete resetButton;
     delete resultOutput;
+    delete fileButton;
 } 

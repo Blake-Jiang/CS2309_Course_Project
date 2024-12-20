@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -40,8 +41,37 @@ double calculate(double a, double b, char op, const string& expr1, const string&
     }
 }
 
+// 在solve24函数之前添加solve24Helper的声明
+bool solve24Helper(vector<double>& nums, vector<string>& exprs, string& solution);
+
 // 修改solve24函数
 bool solve24(vector<double>& nums, vector<string>& exprs, string& solution) {
+    // 首先尝试对数字进行全排列
+    vector<int> indices(nums.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        indices[i] = i;
+    }
+
+    do {
+        // 创建排列后的数字和表达式向量
+        vector<double> permuted_nums;
+        vector<string> permuted_exprs;
+        for (int idx : indices) {
+            permuted_nums.push_back(nums[idx]);
+            permuted_exprs.push_back(exprs[idx]);
+        }
+
+        // 使用排列后的向量尝试求解
+        if (solve24Helper(permuted_nums, permuted_exprs, solution)) {
+            return true;
+        }
+    } while (next_permutation(indices.begin(), indices.end()));
+
+    return false;
+}
+
+// 新增辅助函数来处理实际的计算
+bool solve24Helper(vector<double>& nums, vector<string>& exprs, string& solution) {
     if (nums.size() == 1) {
         if (isCloseTo24(nums[0])) {
             solution = exprs[0];
@@ -73,7 +103,7 @@ bool solve24(vector<double>& nums, vector<string>& exprs, string& solution) {
                 rest_nums.push_back(result);
                 rest_exprs.push_back(new_expr);
 
-                if (solve24(rest_nums, rest_exprs, solution)) {
+                if (solve24Helper(rest_nums, rest_exprs, solution)) {
                     return true;
                 }
 
@@ -85,7 +115,13 @@ bool solve24(vector<double>& nums, vector<string>& exprs, string& solution) {
     return false;
 }
 
-// 添加新的函数：处理单行数据
+// 新增：检查输入是否合法
+bool isValidInput(const string& input) {
+    vector<string> validInputs = {"A", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+    return find(validInputs.begin(), validInputs.end(), input) != validInputs.end();
+}
+
+// 修改 processLine 函数
 bool processLine(const string& line, string& result, string& solution) {
     vector<double> nums(4);
     vector<string> exprs(4);
@@ -93,7 +129,24 @@ bool processLine(const string& line, string& result, string& solution) {
     string input;
     int i = 0;
     
-    while (ss >> input && i < 4) {
+    // 检查输入数量
+    vector<string> inputs;
+    while (ss >> input) {
+        inputs.push_back(input);
+    }
+    
+    if (inputs.size() != 4) {
+        result = "! Invalid input: exactly 4 numbers required";
+        return false;
+    }
+    
+    // 验证每个输入
+    for (const string& input : inputs) {
+        if (!isValidInput(input)) {
+            result = "! Invalid input: " + input + " is not a valid card value";
+            return false;
+        }
+        
         // 转换扑克牌输入
         if (input == "A" || input == "1") {
             nums[i] = 1;
@@ -115,18 +168,31 @@ bool processLine(const string& line, string& result, string& solution) {
     return success;
 }
 
-// 添加新函数：处理控制台输入
+// 修改 processConsoleInput 函数
 void processConsoleInput() {
-    string input;
-    cout << "Please enter 4 numbers (A, 2-10, J, Q, K), separated by spaces:" << endl;
-    getline(cin, input);
-    
-    string result, solution;
-    bool success = processLine(input, result, solution);
-    
-    cout << (success ? "Solution found!\n" : "No solution found.\n");
-    if (success) {
-        cout << "Expression: " << solution << " = 24" << endl;
+    while (true) {
+        cout << "Please enter 4 numbers (A, 2-10, J, Q, K), separated by spaces:" << endl;
+        string input;
+        getline(cin, input);
+        
+        if (input.empty()) {
+            cout << "Empty input. Please try again." << endl;
+            continue;
+        }
+        
+        string result, solution;
+        bool success = processLine(input, result, solution);
+        
+        if (!result.empty() && result[0] == '!') {
+            cout << result << endl;
+            continue;
+        }
+        
+        cout << (success ? "Solution found!\n" : "No solution found.\n");
+        if (success) {
+            cout << "Expression: " << solution << " = 24" << endl;
+        }
+        break;
     }
 }
 

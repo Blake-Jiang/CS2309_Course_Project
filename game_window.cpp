@@ -528,7 +528,7 @@ void GameWindow::processFile() {
     inFile.close();
     outFile.close();
     
-    resultOutput->value("Results have benn saved to test_result.txt");
+    resultOutput->value("Results have been saved to test_result.txt");
 }
 
 bool GameWindow::processLine(const std::string& line, std::string& result, std::string& solution) {
